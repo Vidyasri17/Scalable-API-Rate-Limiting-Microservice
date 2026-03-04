@@ -1,0 +1,52 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=mongodb://mongo:27017/ratelimitdb
+      - REDIS_URL=redis://redis:6379
+      - DEFAULT_RATE_LIMIT_MAX_REQUESTS=100
+      - DEFAULT_RATE_LIMIT_WINDOW_SECONDS=60
+      - PORT=3000
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:6 # Use 6 so mongosh is available as requested by test code
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=ratelimitdb
+    volumes:
+      - mongo_data:/data/db
+      - ./init-db.js:/docker-entrypoint-initdb.d/init-db.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_data:
