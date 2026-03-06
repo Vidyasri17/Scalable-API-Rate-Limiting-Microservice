@@ -1,6 +1,7 @@
 version: '3.8'
 services:
   app:
+    image: my-ratelimit-service-app:latest
     build:
       context: .
       dockerfile: Dockerfile

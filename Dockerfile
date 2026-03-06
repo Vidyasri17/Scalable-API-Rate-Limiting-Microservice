@@ -2,7 +2,7 @@
 FROM node:18-alpine as builder
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --production
+RUN npm install
 
 # Stage 2: Copy application code and runtime dependencies
 FROM node:18-alpine
